@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PlotSettings xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <CurveSettingCollection>
+    <CurveSettings>
+      <CurveId>Z</CurveId>
+      <CurveDisplayName>Z</CurveDisplayName>
+      <CurveLineTicks>None</CurveLineTicks>
+      <CurveColor>Blue</CurveColor>
+      <ChartAssignment2>0</ChartAssignment2>
+    </CurveSettings>
+    <CurveSettings>
+      <CurveId>X</CurveId>
+      <CurveDisplayName>X</CurveDisplayName>
+      <CurveLineTicks>None</CurveLineTicks>
+      <CurveColor>Green</CurveColor>
+      <ChartAssignment2>1</ChartAssignment2>
+    </CurveSettings>
+    <CurveSettings>
+      <CurveId>Y</CurveId>
+      <CurveDisplayName>Y</CurveDisplayName>
+      <CurveLineTicks>None</CurveLineTicks>
+      <CurveColor>Red</CurveColor>
+      <ChartAssignment2>2</ChartAssignment2>
+    </CurveSettings>
+  </CurveSettingCollection>
+  <XSweepTime>20 sec</XSweepTime>
+  <XTimeFormat>Auto</XTimeFormat>
+  <DisplayRefreshRate>Rate50ms</DisplayRefreshRate>
+  <ChartType>LineChart</ChartType>
+  <OptimizeBinaryCurves>On</OptimizeBinaryCurves>
+  <CurveDistribution>MultipleCharts</CurveDistribution>
+  <TriggerEnabled>false</TriggerEnabled>
+  <TriggerCondition>None</TriggerCondition>
+  <TriggerMode>Continuous</TriggerMode>
+  <LineWidths2>Auto</LineWidths2>
+</PlotSettings>
