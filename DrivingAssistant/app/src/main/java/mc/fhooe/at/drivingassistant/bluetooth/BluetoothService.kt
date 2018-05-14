@@ -20,6 +20,8 @@ import mc.fhooe.at.drivingassistant.bluetooth.BluetoothConstants.CONNECT_COMMAND
 import mc.fhooe.at.drivingassistant.bluetooth.BluetoothConstants.START_BYTE
 import mc.fhooe.at.drivingassistant.bluetooth.BluetoothConstants.START_COMMUNICATION
 import mc.fhooe.at.drivingassistant.bluetooth.BluetoothConstants.STOP_BYTE
+import mc.fhooe.at.drivingassistant.data.IData
+import mc.fhooe.at.drivingassistant.parser.MessageHandler
 
 
 class BluetoothService : Service() {
@@ -83,34 +85,38 @@ class BluetoothService : Service() {
     private inner class ConnectedThread(socket: BluetoothSocket?) : Thread() {
         private var inStream: InputStream? = null
         private var outStream: OutputStream? = null
+        private var messageHandler : MessageHandler? = null
 
         init {
             inStream = socket?.inputStream
             outStream = socket?.outputStream
+            messageHandler = MessageHandler()
         }
 
         override fun run() {
             val buffer = ByteArray(256)
             var bytes: Int?
-            var message = StringBuilder()
+            val message = StringBuilder()
 
             while (true) {
                 try {
                     bytes = inStream?.read(buffer)
                     if (bytes != null) {
                         message.append(String(buffer, 0, bytes))
-                        if(message.contains(START_COMMUNICATION)){
-                            broadcastUpdate(App.ACTION_COMMUNICATION_STARTED)
-                        }
                         Logging.everything(javaClass.simpleName, message.toString())
-                        broadcastUpdate(App.ACTION_RECEIVE_DATA, message.toString())
+                        if (message.contains(START_COMMUNICATION)) {
+                            broadcastUpdate(App.ACTION_COMMUNICATION_STARTED)
+                        } else {
+                            val data = messageHandler?.handle(message.toString())
+                            data?.let { broadcastUpdate(App.ACTION_RECEIVE_DATA, it) }
+                        }
+                        message.delete(0, message.length - 1)
                     }
                 } catch (e: IOException) {
                     interrupt()
                     broadcastUpdate(App.ACTION_LEAVE_ACTIVITY)
                     break
                 }
-
             }
         }
 
@@ -142,6 +148,12 @@ class BluetoothService : Service() {
     }
 
     private fun broadcastUpdate(action: String, data: String) {
+        val intent = Intent(action)
+        intent.putExtra(App.INTENT_NAME_BLUETOOTH_DATA_RECEIVE, data)
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
+    }
+
+    private fun broadcastUpdate(action: String, data: IData) {
         val intent = Intent(action)
         intent.putExtra(App.INTENT_NAME_BLUETOOTH_DATA_RECEIVE, data)
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent)
