@@ -10,7 +10,13 @@ class MessageHandler : IMessageHandler() {
     override fun handle(message: String): IData {
         if (valid(message)) {
             val parser = factory.create(extractCommand(message))
-            return parser.parse(extractData(message))
+            val parsed : IData
+            try {
+               parsed = parser.parse(extractData(message))
+            }catch (_ : Exception){
+                return IData()
+            }
+            return parsed
         }
         return IData()
     }

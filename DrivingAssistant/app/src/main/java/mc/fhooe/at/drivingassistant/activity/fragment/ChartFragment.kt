@@ -43,10 +43,6 @@ class ChartFragment : Fragment(), ChartView, OnChartValueSelectedListener {
         recyclerview.adapter = chartViewAdapter
         if (chartDataList.size == 0) {
             chartDataList.add(LineDataWrapper(LineData(), "Acceleration", "Raw Data", 0))
-            chartDataList.add(LineDataWrapper(LineData(), "Gyro", "Raw Data", 1))
-            chartDataList.add(LineDataWrapper(LineData(), "Magnetometer", "Raw Data", 2))
-            chartDataList.add(LineDataWrapper(LineData(), "Angle", "Angle to Surface", 3))
-            chartDataList.add(LineDataWrapper(LineData(), "Force", "Raw pressure data", 4))
         }
         presenter?.chartDataWrapper = chartDataList
     }
@@ -94,44 +90,8 @@ class ChartFragment : Fragment(), ChartView, OnChartValueSelectedListener {
 
     //region CHART
 
-    override fun updateMagEntries(list: ArrayList<Entry>) {
-        val data: LineData? = chartDataList[2].lineData
-        for ((a, set: Entry) in list.withIndex()) {
-            data?.addEntry(set, a)
-        }
-        data?.notifyDataChanged()
-        chartViewAdapter.notifyDataSetChanged()
-    }
-
     override fun updateAccelerationEntries(list: ArrayList<Entry>) {
         val data: LineData? = chartDataList[0].lineData
-        for ((a, set: Entry) in list.withIndex()) {
-            data?.addEntry(set, a)
-        }
-        data?.notifyDataChanged()
-        chartViewAdapter.notifyDataSetChanged()
-    }
-
-    override fun updateGyroEntries(list: ArrayList<Entry>) {
-        val data: LineData? = chartDataList[1].lineData
-        for ((a, set: Entry) in list.withIndex()) {
-            data?.addEntry(set, a)
-        }
-        data?.notifyDataChanged()
-        chartViewAdapter.notifyDataSetChanged()
-    }
-
-    override fun updatePressureEntry(list: ArrayList<Entry>) {
-        val data: LineData? = chartDataList[4].lineData
-        for ((a, set: Entry) in list.withIndex()) {
-            data?.addEntry(set, a)
-        }
-        data?.notifyDataChanged()
-        chartViewAdapter.notifyDataSetChanged()
-    }
-
-    override fun updateAngleEntry(list: ArrayList<Entry>) {
-        val data: LineData? = chartDataList[3].lineData
         for ((a, set: Entry) in list.withIndex()) {
             data?.addEntry(set, a)
         }

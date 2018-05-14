@@ -16,6 +16,9 @@ class ParserFactory : IParserFactory {
             BluetoothConstants.VEL_COMMAND -> {
                 return Parsers.VelParser
             }
+            BluetoothConstants.LDR_COMMAND -> {
+                return Parsers.LdrParser
+            }
         }
         throw NoParserException("No Parser defined for the provided data")
     }

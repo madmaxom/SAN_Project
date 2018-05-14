@@ -24,6 +24,11 @@ import mc.fhooe.at.drivingassistant.util.PreferenceHelper
 import mc.fhooe.at.drivingassistant.view.ConnectionDialog
 import mc.fhooe.at.drivingassistant.util.PreferenceHelper.get
 import android.content.Intent
+import android.support.v4.content.ContextCompat
+import android.widget.ImageButton
+import mc.fhooe.at.drivingassistant.data.AccData
+import mc.fhooe.at.drivingassistant.data.LdrData
+import mc.fhooe.at.drivingassistant.data.TempData
 import mc.fhooe.at.drivingassistant.listener.PermissionResponseListener
 import mc.fhooe.at.drivingassistant.util.permissions.PermissionHelper
 
@@ -35,6 +40,7 @@ class LogFragment : Fragment(), LogView {
     private var dialog: ConnectionDialog? = null
     private var job: Job? = null
     private var batteryLevel: TextView? = null
+    private var brightness: ImageButton? = null
 
     private val timeOut: Int = 10
     private var prefs: SharedPreferences? = null
@@ -62,6 +68,7 @@ class LogFragment : Fragment(), LogView {
         dialog?.show(fm, "Sample Fragment")
         displayCancelButtonAfterTimeout(timeOut)
         batteryLevel = actionBar?.customView?.findViewById(R.id.batteryLevel)
+        brightness = actionBar?.customView?.findViewById(R.id.imageButton)
     }
 
     //endregion
@@ -101,6 +108,22 @@ class LogFragment : Fragment(), LogView {
     override fun connected() {
         job?.cancel()
         dialog?.dismiss()
+    }
+
+    override fun setAcc(data: AccData) {
+       x.text = data.x.toString()
+       y.text = data.y.toString()
+    }
+
+    override fun setTemp(data: TempData) {
+        temp.text = data.temp.toString()
+    }
+
+    override fun setBrightImage(data: LdrData) {
+        when(data.on){
+            true -> brightness?.setImageDrawable(ContextCompat.getDrawable(context!!, R.drawable.bright))
+            false -> brightness?.setImageDrawable(ContextCompat.getDrawable(context!!, R.drawable.not_bright))
+        }
     }
 
     override fun displayCancelButtonAfterTimeout(timeOut: Int) {

@@ -8,42 +8,111 @@
 #include "AccelerometerDriver.h"
 #include "DisplayDriver.h"
 #include "string.h"
+#include <avr/wdt.h>
 
 // Driver
 TemperatureDriver temperature_driver;
 AccelerometerDriver accelerometer_driver;
-BluetoothDriver bluetooth_driver; 
+BluetoothDriver bluetooth_driver;
+MessageBuilder message_builder;
 
 // Fields
 double gdata[3];
 String inputString = "";
+double temp;
+int delayCount = 300;
+
+int PIN_NOT_AVAILABLE = A7;
+int LDR_Pin = A2; 
 
 // Method signatures
 unsigned long string_to_hex(const String& string);
 unsigned long hex_to_string(const String& string);
+
+void handleMessage();
+void sendData();
+void turnLightsOn();
+void dimLights(); 
 
 void setup()
 {
 	Serial.begin(9600);
 
 	temperature_driver = TemperatureDriver(6);
-	accelerometer_driver = AccelerometerDriver(0, 1, 2, 1);
-	bluetooth_driver = BluetoothDriver(12, 13); 
+	accelerometer_driver = AccelerometerDriver(0, 1, PIN_NOT_AVAILABLE, 1);
+	bluetooth_driver = BluetoothDriver(12, 13);
+	message_builder = MessageBuilder();
 }
 
 void loop()
 {
-	if(bluetooth_driver.IsConnected() != true)
+	if (bluetooth_driver.IsConnected() != true)
 	{
 		bluetooth_driver.Connect();
 	}
 	else
 	{
-		accelerometer_driver.GetGData(gdata);
-		Serial.println(String(*gdata, 2));
-		delay(1000);
+		// Watchdog 
+		// If after 4 seconds no response from smartphone --> reset arduino
+		wdt_enable(WDTO_4S);
+		sendData();
+
+		// Reset watchdog so it does not reset arduino
+		wdt_reset();
+		delay(10);
 	}
 }
+
+void sendData()
+{
+	delayCount++;
+	char response[20];
+	// ACC ***************************************************
+	accelerometer_driver.GetGData(gdata);
+	message_builder.BuildResponse(String(*gdata, 2) + ";" + String(*(gdata + 1), 2), ACC_COMMAND, response);
+	Serial.println(response);
+	bluetooth_driver.Send(response);
+
+	// TEMP **************************************************
+	if (delayCount > 20)
+	{
+		temp = temperature_driver.GetTemperature();
+		message_builder.BuildResponse(String(temp, 2), TEMP_COMMAND, response);
+		Serial.println(response);
+		bluetooth_driver.Send(response);
+
+	// LDR ***************************************************
+
+		const int ldr_reading = analogRead(LDR_Pin);
+		Serial.println(ldr_reading); 
+		if (ldr_reading > 600) {
+			turnLightsOn(); 
+			message_builder.BuildResponse(String(1), LDR_COMMAND, response);
+			Serial.println(response);
+			bluetooth_driver.Send(response);
+		}
+		else
+		{
+			dimLights();
+			message_builder.BuildResponse(String(0), LDR_COMMAND, response);
+			Serial.println(response);
+			bluetooth_driver.Send(response);
+		}
+
+		delayCount = 0;
+	}
+}
+
+void turnLightsOn()
+{
+	
+}
+
+void dimLights()
+{
+	
+}
+
 
 unsigned long string_to_hex(const String& string)
 {

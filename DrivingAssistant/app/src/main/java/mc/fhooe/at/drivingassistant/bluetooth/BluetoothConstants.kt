@@ -9,13 +9,14 @@ object BluetoothConstants {
     const val START_BYTE = "$"
     const val STOP_BYTE = "*"
     const val SEPERATOR = ";"
-    const val ACK = "!"
+    const val ACK = "|"
     const val NACK = "?"
 
     const val CONNECT_COMMAND = "0:"
     const val ACC_COMMAND = "1:"
     const val TEMP_COMMAND = "2:"
     const val VEL_COMMAND = "3:"
+    const val LDR_COMMAND = "4:"
     //endregion
 
 }

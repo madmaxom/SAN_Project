@@ -12,6 +12,7 @@ import android.os.IBinder
 import android.support.v4.content.LocalBroadcastManager
 import mc.fhooe.at.drivingassistant.App
 import mc.fhooe.at.drivingassistant.Logging
+import mc.fhooe.at.drivingassistant.bluetooth.BluetoothConstants.ACK
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -61,7 +62,12 @@ class BluetoothService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         device = intent?.extras?.getParcelable(App.INTENT_NAME_BLUETOOTH_DEVICE)
         if (device != null) {
-            connect(device)
+            try {
+                connect(device)
+            } catch (ex: Exception) {
+                broadcastUpdate(App.ACTION_LEAVE_ACTIVITY)
+                stopSelf()
+            }
         } else {
             broadcastUpdate(App.ACTION_LEAVE_ACTIVITY)
             stopSelf()
@@ -85,7 +91,7 @@ class BluetoothService : Service() {
     private inner class ConnectedThread(socket: BluetoothSocket?) : Thread() {
         private var inStream: InputStream? = null
         private var outStream: OutputStream? = null
-        private var messageHandler : MessageHandler? = null
+        private var messageHandler: MessageHandler? = null
 
         init {
             inStream = socket?.inputStream
@@ -103,18 +109,24 @@ class BluetoothService : Service() {
                     bytes = inStream?.read(buffer)
                     if (bytes != null) {
                         message.append(String(buffer, 0, bytes))
-                        Logging.everything(javaClass.simpleName, message.toString())
                         if (message.contains(START_COMMUNICATION)) {
                             broadcastUpdate(App.ACTION_COMMUNICATION_STARTED)
+                            message.delete(0, message.length - 1)
+                            Logging.everything(javaClass.simpleName, message.toString())
                         } else {
-                            val data = messageHandler?.handle(message.toString())
-                            data?.let { broadcastUpdate(App.ACTION_RECEIVE_DATA, it) }
+                            if (message.contains(BluetoothConstants.STOP_BYTE)) {
+                                Logging.everything(javaClass.simpleName, message.toString())
+                                val data = messageHandler?.handle(message.toString())
+                                data?.let { broadcastUpdate(App.ACTION_RECEIVE_DATA, it) }
+                                message.delete(0, message.length)
+                                write(ACK)
+                            }
                         }
-                        message.delete(0, message.length - 1)
                     }
                 } catch (e: IOException) {
                     interrupt()
                     broadcastUpdate(App.ACTION_LEAVE_ACTIVITY)
+                    Logging.error(javaClass.simpleName, e.message.toString())
                     break
                 }
             }
@@ -128,7 +140,6 @@ class BluetoothService : Service() {
                 Logging.error(this.javaClass.simpleName, e.message.toString())
                 broadcastUpdate(App.ACTION_LEAVE_ACTIVITY)
             }
-
         }
     }
 

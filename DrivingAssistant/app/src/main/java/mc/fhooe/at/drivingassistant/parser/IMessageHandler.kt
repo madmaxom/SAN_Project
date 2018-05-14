@@ -11,7 +11,7 @@ abstract class IMessageHandler {
 
     fun extractCommand(message: String): String {
         val substring = message.substringAfter("$")
-        return substring.substringBefore(":")
+        return substring.substringBefore(":") + ":"
     }
 
     fun extractData(message: String): String {

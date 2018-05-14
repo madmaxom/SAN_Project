@@ -1,8 +1,8 @@
 package mc.fhooe.at.drivingassistant.data
 
-class TempData(var temp: Double? = null) : IData() {
+class LdrData(var on : Boolean) : IData() {
 
     override fun toString(): String {
-        return "Temp: $temp\n"
+        return "X: $on;\n"
     }
 }

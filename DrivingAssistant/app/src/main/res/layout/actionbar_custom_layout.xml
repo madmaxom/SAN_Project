@@ -36,7 +36,7 @@
             android:layout_height="match_parent"
             android:background="@null"
             android:rotation="-90"
-            android:src="@drawable/ic_battery_std_black_24dp" />
+            android:src="@drawable/bright" />
     </LinearLayout>
 
 

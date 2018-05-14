@@ -13,7 +13,9 @@ import com.github.mikephil.charting.data.LineDataSet
 import mc.fhooe.at.drivingassistant.App
 import mc.fhooe.at.drivingassistant.Logging
 import mc.fhooe.at.drivingassistant.R
+import mc.fhooe.at.drivingassistant.data.AccData
 import mc.fhooe.at.drivingassistant.data.LineDataWrapper
+import mc.fhooe.at.drivingassistant.data.TempData
 import mc.fhooe.at.drivingassistant.mvp.base.BasePresenter
 import mc.fhooe.at.drivingassistant.mvp.view.ChartView
 
@@ -23,27 +25,27 @@ class ChartPresenter(private var context: Context) : BasePresenter<ChartView> {
     private var view: ChartView? = null
     var chartDataWrapper: ArrayList<LineDataWrapper>? = null
 
+    private val dataReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            val data = intent.extras.get(App.INTENT_NAME_BLUETOOTH_DATA_RECEIVE)
+            when(data){
+                is AccData -> addAccelerationEntry(data)
+            }
+        }
+    }
 
     override fun onAttach(view: ChartView) {
         this.view = view
-//        Thread(Runnable {
-//            while (true) {
-//                Thread.sleep(20)
-//                val array: IntArray = IntArray(4)
-//                array[0] = ThreadLocalRandom.current().nextInt(30000, 45000)
-//                array[1] = ThreadLocalRandom.current().nextInt(30000, 45000)
-//                array[2] = ThreadLocalRandom.current().nextInt(30000, 45000)
-//                array[3] = ThreadLocalRandom.current().nextInt(30000, 45000)
-//                val intent: Intent = Intent()
-//                intent.action = App.DATA_SOLE
-//                intent.putExtra("Sole", array)
-//                LocalBroadcastManager.getInstance(context).sendBroadcast(intent)
-//            }
-//        }).start()
+        LocalBroadcastManager.getInstance(context)
+            .registerReceiver(dataReceiver, IntentFilter(App.ACTION_RECEIVE_DATA))
     }
 
     override fun onDetach() {
         view = null
+        try {
+            LocalBroadcastManager.getInstance(context).unregisterReceiver(dataReceiver)
+        } catch (ex: Exception) {
+        }
     }
 
     private fun createSet(label: String, colorId: Int): LineDataSet {
@@ -57,5 +59,38 @@ class ChartPresenter(private var context: Context) : BasePresenter<ChartView> {
         set.setDrawValues(false)
         set.setDrawCircles(false)
         return set
+    }
+
+    fun addAccelerationEntry(streamData: AccData) {
+        val list: ArrayList<Entry> = ArrayList()
+        val data = chartDataWrapper?.get(0)?.lineData
+        var set = data?.getDataSetByIndex(0)
+        if (set == null) {
+            set = createSet("X", R.color.chartColor1)
+            data?.addDataSet(set)
+        }
+
+        var set1 = data?.getDataSetByIndex(1)
+        if (set1 == null) {
+            set1 = createSet("Y", R.color.chartColor2)
+            data?.addDataSet(set1)
+        }
+
+        if (data != null) {
+            list.add(
+                Entry(
+                    data.getDataSetByIndex(0).entryCount.toFloat(),
+                    streamData.x.toFloat()
+                )
+            )
+            list.add(
+                Entry(
+                    data.getDataSetByIndex(1).entryCount.toFloat(),
+                    streamData.y.toFloat()
+                )
+            )
+        }
+
+        view?.updateAccelerationEntries(list)
     }
 }
