@@ -24,8 +24,6 @@ public:
 	int pinX;
 	int pinY;
 	int pinZ;
-
-	SoftwareSerial serial;
 private:
 	bool connected = false;
 	String inputString;

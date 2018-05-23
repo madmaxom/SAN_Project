@@ -27,6 +27,8 @@ int PIN_NOT_AVAILABLE = A7;
 int LDR_Pin = A2; 
 int frontLightPin1 = 7;
 int frontLightPin2 = 8;
+int backLightPin1 = 10;
+int backLightPin2 = 11;
 int ON = 1;
 int OFF = 0;
 
@@ -112,12 +114,16 @@ void turnLightsOn()
 {
 	digitalWrite(frontLightPin1, ON);
 	digitalWrite(frontLightPin2, ON);
+	digitalWrite(backLightPin1, ON);
+	digitalWrite(backLightPin2, ON);
 }
 
 void dimLights()
 {
 	digitalWrite(frontLightPin1, OFF);
 	digitalWrite(frontLightPin2, OFF);
+	digitalWrite(backLightPin1, OFF);
+	digitalWrite(backLightPin2, OFF);
 }
 
 
