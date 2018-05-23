@@ -1,8 +1,9 @@
+#include "SpeedDriver.h"
 #include "MessageBuilder.h"
 #include "BluetoothDriver.h"
-#include <ThreadController.h>
-#include <Thread.h>
-#include <StaticThreadController.h>
+//#include <ThreadController.h>
+//#include <Thread.h>
+//#include <StaticThreadController.h>
 #include "ObstacleDetection.h"
 #include "TemperatureDriver.h"
 #include "AccelerometerDriver.h"
@@ -24,6 +25,10 @@ int delayCount = 300;
 
 int PIN_NOT_AVAILABLE = A7;
 int LDR_Pin = A2; 
+int frontLightPin1 = 7;
+int frontLightPin2 = 8;
+int ON = 1;
+int OFF = 0;
 
 // Method signatures
 unsigned long string_to_hex(const String& string);
@@ -105,12 +110,14 @@ void sendData()
 
 void turnLightsOn()
 {
-	
+	digitalWrite(frontLightPin1, ON);
+	digitalWrite(frontLightPin2, ON);
 }
 
 void dimLights()
 {
-	
+	digitalWrite(frontLightPin1, OFF);
+	digitalWrite(frontLightPin2, OFF);
 }
 
 
