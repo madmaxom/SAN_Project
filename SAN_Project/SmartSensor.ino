@@ -85,7 +85,7 @@ void sendData()
 
 		const int ldr_reading = analogRead(LDR_Pin);
 		Serial.println(ldr_reading); 
-		if (ldr_reading > 600) {
+		if (ldr_reading < 600) {
 			turnLightsOn(); 
 			message_builder.BuildResponse(String(1), LDR_COMMAND, response);
 			Serial.println(response);
