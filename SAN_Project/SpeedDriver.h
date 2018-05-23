@@ -8,6 +8,7 @@
 #else
 	#include "WProgram.h"
 #endif
+#include <SoftwareSerial.h>
 
 class SpeedDriver
 {
