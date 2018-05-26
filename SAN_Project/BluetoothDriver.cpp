@@ -32,6 +32,7 @@ void BluetoothDriver::Disconnect()
 void BluetoothDriver::Connect()
 {
 	serial.begin(9600);
+	serial.setTimeout(25); 
 	while (connected == false)
 	{
 		if (serial.available() > 0) {
@@ -48,15 +49,15 @@ void BluetoothDriver::Connect()
 void BluetoothDriver::Send(const String& msg)
 {
 	serial.write(msg.c_str());
-	while (true)
-	{
-		if (serial.available() > 0) {
-			inputString = static_cast<char>(serial.read());
-			Serial.println(inputString);
-			if (inputString.indexOf(ACK) >= 0)
-			{
-				break;
-			}
-		}
-	}
+	// while (true)
+	// {
+	// 	if (serial.available() > 0) {
+	// 		inputString = serial.readString();
+	// 		Serial.println(inputString);
+	// 		if (inputString.indexOf(ACK) >= 0)
+	// 		{
+	// 			break;
+	// 		}
+	// 	}
+	// }
 }

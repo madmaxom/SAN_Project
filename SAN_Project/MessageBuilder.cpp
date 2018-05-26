@@ -8,6 +8,7 @@ MessageBuilder::MessageBuilder()
 void MessageBuilder::BuildResponse(const String msg, const String command, char* outStr)
 {
 	String message = String();
+	message.reserve(200); 
 	message += START_BYTE;
 	message += command;
 	message += msg;

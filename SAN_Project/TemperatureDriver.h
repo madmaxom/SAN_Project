@@ -14,7 +14,7 @@ class TemperatureDriver
 public:
 	TemperatureDriver(); 
 	~TemperatureDriver(); 
-	TemperatureDriver(int pin); 
+	TemperatureDriver(int input);
 	double GetTemperature() const; 
 	double GetMinMaxTemp(double* values);
 	bool Alarm() const;

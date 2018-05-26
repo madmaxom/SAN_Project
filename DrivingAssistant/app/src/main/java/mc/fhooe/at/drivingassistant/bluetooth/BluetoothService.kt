@@ -108,18 +108,23 @@ class BluetoothService : Service() {
                 try {
                     bytes = inStream?.read(buffer)
                     if (bytes != null) {
-                        message.append(String(buffer, 0, bytes))
-                        if (message.contains(START_COMMUNICATION)) {
-                            broadcastUpdate(App.ACTION_COMMUNICATION_STARTED)
-                            message.delete(0, message.length - 1)
-                            Logging.everything(javaClass.simpleName, message.toString())
-                        } else {
-                            if (message.contains(BluetoothConstants.STOP_BYTE)) {
+                        synchronized(message) {
+                            message.append(String(buffer, 0, bytes))
+                            if (message.contains(START_COMMUNICATION)) {
+                                broadcastUpdate(App.ACTION_COMMUNICATION_STARTED)
+                                message.delete(0, message.length - 1)
                                 Logging.everything(javaClass.simpleName, message.toString())
-                                val data = messageHandler?.handle(message.toString())
-                                data?.let { broadcastUpdate(App.ACTION_RECEIVE_DATA, it) }
-                                message.delete(0, message.length)
-                                write(ACK)
+                            } else {
+                                if(message.contains("$") && message.contains("*")){
+                                    var messages = message.split("$")
+                                    messages.forEach {
+                                        Logging.everything(javaClass.simpleName, "$$it")
+                                        val data = messageHandler?.handle("$$it")
+                                        data?.let { broadcastUpdate(App.ACTION_RECEIVE_DATA, it) }
+                                    }
+                                    message.delete(0, message.length)
+                                    write(ACK)
+                                }
                             }
                         }
                     }

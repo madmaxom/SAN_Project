@@ -19,6 +19,9 @@ class ParserFactory : IParserFactory {
             BluetoothConstants.LDR_COMMAND -> {
                 return Parsers.LdrParser
             }
+            BluetoothConstants.DIST_COMMAND -> {
+                return Parsers.DistanceParser
+            }
         }
         throw NoParserException("No Parser defined for the provided data")
     }

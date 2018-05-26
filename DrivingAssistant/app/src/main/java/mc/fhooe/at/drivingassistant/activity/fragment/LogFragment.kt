@@ -121,8 +121,8 @@ class LogFragment : Fragment(), LogView {
 
     override fun setBrightImage(data: LdrData) {
         when(data.on){
-            true -> brightness?.setImageDrawable(ContextCompat.getDrawable(context!!, R.drawable.bright))
-            false -> brightness?.setImageDrawable(ContextCompat.getDrawable(context!!, R.drawable.not_bright))
+            true -> brightness?.setImageDrawable(ContextCompat.getDrawable(context!!, R.drawable.not_bright))
+            false -> brightness?.setImageDrawable(ContextCompat.getDrawable(context!!, R.drawable.bright))
         }
     }
 

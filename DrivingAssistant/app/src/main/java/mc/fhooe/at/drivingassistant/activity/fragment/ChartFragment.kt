@@ -43,6 +43,7 @@ class ChartFragment : Fragment(), ChartView, OnChartValueSelectedListener {
         recyclerview.adapter = chartViewAdapter
         if (chartDataList.size == 0) {
             chartDataList.add(LineDataWrapper(LineData(), "Acceleration", "Raw Data", 0))
+            chartDataList.add(LineDataWrapper(LineData(), "Distances", "in cm", 1))
         }
         presenter?.chartDataWrapper = chartDataList
     }
@@ -92,6 +93,15 @@ class ChartFragment : Fragment(), ChartView, OnChartValueSelectedListener {
 
     override fun updateAccelerationEntries(list: ArrayList<Entry>) {
         val data: LineData? = chartDataList[0].lineData
+        for ((a, set: Entry) in list.withIndex()) {
+            data?.addEntry(set, a)
+        }
+        data?.notifyDataChanged()
+        chartViewAdapter.notifyDataSetChanged()
+    }
+
+    override fun updateDistanceEntry(list: ArrayList<Entry>){
+        val data: LineData? = chartDataList[1].lineData
         for ((a, set: Entry) in list.withIndex()) {
             data?.addEntry(set, a)
         }

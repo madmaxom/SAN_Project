@@ -14,6 +14,7 @@ import mc.fhooe.at.drivingassistant.App
 import mc.fhooe.at.drivingassistant.Logging
 import mc.fhooe.at.drivingassistant.R
 import mc.fhooe.at.drivingassistant.data.AccData
+import mc.fhooe.at.drivingassistant.data.DistanceData
 import mc.fhooe.at.drivingassistant.data.LineDataWrapper
 import mc.fhooe.at.drivingassistant.data.TempData
 import mc.fhooe.at.drivingassistant.mvp.base.BasePresenter
@@ -30,6 +31,7 @@ class ChartPresenter(private var context: Context) : BasePresenter<ChartView> {
             val data = intent.extras.get(App.INTENT_NAME_BLUETOOTH_DATA_RECEIVE)
             when(data){
                 is AccData -> addAccelerationEntry(data)
+                is DistanceData -> addDistanceEntry(data)
             }
         }
     }
@@ -59,6 +61,63 @@ class ChartPresenter(private var context: Context) : BasePresenter<ChartView> {
         set.setDrawValues(false)
         set.setDrawCircles(false)
         return set
+    }
+
+    fun addDistanceEntry(streamData: DistanceData) {
+        val list: ArrayList<Entry> = ArrayList()
+        val data = chartDataWrapper?.get(1)?.lineData
+        var set = data?.getDataSetByIndex(0)
+        if (set == null) {
+            set = createSet("Front", R.color.chartColor1)
+            data?.addDataSet(set)
+        }
+
+        var set1 = data?.getDataSetByIndex(1)
+        if (set1 == null) {
+            set1 = createSet("B Middle", R.color.chartColor2)
+            data?.addDataSet(set1)
+        }
+
+        var set2 = data?.getDataSetByIndex(2)
+        if (set2 == null) {
+            set2 = createSet("B Left", R.color.chartColor3)
+            data?.addDataSet(set2)
+        }
+
+        var set3 = data?.getDataSetByIndex(3)
+        if (set3 == null) {
+            set3 = createSet("B Right", R.color.chartColor4)
+            data?.addDataSet(set3)
+        }
+
+        if (data != null) {
+            list.add(
+                Entry(
+                    data.getDataSetByIndex(0).entryCount.toFloat(),
+                    streamData.distanceFront.toFloat()
+                )
+            )
+            list.add(
+                Entry(
+                    data.getDataSetByIndex(1).entryCount.toFloat(),
+                    streamData.distanceBackM.toFloat()
+                )
+            )
+            list.add(
+                Entry(
+                    data.getDataSetByIndex(2).entryCount.toFloat(),
+                    streamData.distanceBackL.toFloat()
+                )
+            )
+            list.add(
+                Entry(
+                    data.getDataSetByIndex(3).entryCount.toFloat(),
+                    streamData.distanceBackR.toFloat()
+                )
+            )
+        }
+
+        view?.updateDistanceEntry(list)
     }
 
     fun addAccelerationEntry(streamData: AccData) {
