@@ -1,6 +1,7 @@
 package mc.fhooe.at.drivingassistant.mvp.view
 
 import mc.fhooe.at.drivingassistant.data.AccData
+import mc.fhooe.at.drivingassistant.data.DistanceData
 import mc.fhooe.at.drivingassistant.data.LdrData
 import mc.fhooe.at.drivingassistant.data.TempData
 import mc.fhooe.at.drivingassistant.mvp.base.BaseView
@@ -12,4 +13,5 @@ interface LogView : BaseView {
     fun setAcc(data: AccData)
     fun setTemp(data: TempData)
     fun setBrightImage(data: LdrData)
+    fun setParkAssistant(data: DistanceData)
 }

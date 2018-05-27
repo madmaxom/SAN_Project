@@ -7,6 +7,7 @@ import android.content.IntentFilter
 import android.support.v4.content.LocalBroadcastManager
 import mc.fhooe.at.drivingassistant.App
 import mc.fhooe.at.drivingassistant.data.AccData
+import mc.fhooe.at.drivingassistant.data.DistanceData
 import mc.fhooe.at.drivingassistant.data.LdrData
 import mc.fhooe.at.drivingassistant.data.TempData
 import mc.fhooe.at.drivingassistant.mvp.base.BasePresenter
@@ -29,6 +30,7 @@ class LogPresenter(private var context: Context) : BasePresenter<LogView> {
                 is AccData -> view?.setAcc(data)
                 is TempData -> view?.setTemp(data)
                 is LdrData -> view?.setBrightImage(data)
+                is DistanceData -> view?.setParkAssistant(data)
             }
         }
     }

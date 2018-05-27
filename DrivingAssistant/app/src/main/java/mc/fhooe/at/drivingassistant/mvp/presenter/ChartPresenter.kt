@@ -30,8 +30,12 @@ class ChartPresenter(private var context: Context) : BasePresenter<ChartView> {
         override fun onReceive(context: Context, intent: Intent) {
             val data = intent.extras.get(App.INTENT_NAME_BLUETOOTH_DATA_RECEIVE)
             when(data){
-                is AccData -> addAccelerationEntry(data)
-                is DistanceData -> addDistanceEntry(data)
+                is AccData -> {
+                    addAccelerationEntry(data)
+                }
+                is DistanceData -> {
+                    addDistanceEntry(data)
+                }
             }
         }
     }

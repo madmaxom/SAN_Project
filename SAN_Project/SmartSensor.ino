@@ -127,7 +127,7 @@ void setup()
 	tback_l.onRun(ultrasonicBackL);
 	tback_l.setInterval(1);
 	tPiezo.onRun(checkPiezo);
-	tPiezo.setInterval(100);
+	tPiezo.setInterval(1);
 
 	tBacklight.onRun(turnBacklightOn);
 	tBacklight.setInterval(20); 
@@ -221,9 +221,9 @@ void checkPiezo()
 		|| distance_back_r < distance_3 && distance_back_r > distance_2)
 	{
 		analogWrite(PIN_PIEZO, 50);
-		delay(150);
+		delay(250);
 		analogWrite(PIN_PIEZO, 0);
-		delay(150);
+		delay(250);
 	}
 	else if (distance_front < distance_2 && distance_front > distance_1
 		|| distance_back_l < distance_2 && distance_back_l > distance_1

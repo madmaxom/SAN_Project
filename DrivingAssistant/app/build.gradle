@@ -42,10 +42,8 @@ dependencies {
     implementation 'com.android.support:design:27.1.1'
     implementation 'com.github.PhilJay:MPAndroidChart:v3.0.3'
     implementation 'com.airbnb.android:lottie:2.5.4'
-    implementation 'com.github.MdFarhanRaja:SearchableSpinner:1.9'
     implementation 'com.google.code.gson:gson:2.8.3'
-    implementation 'com.github.adityagohad:HorizontalPicker:1.0.1'
-    implementation 'com.opencsv:opencsv:4.0'
+    implementation 'com.github.devsideal:VectorChildFinder:1.0.0'
 
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:0.21"
     testImplementation 'junit:junit:4.12'
