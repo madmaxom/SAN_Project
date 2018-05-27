@@ -111,8 +111,9 @@ class LogFragment : Fragment(), LogView {
     }
 
     override fun setAcc(data: AccData) {
-       x.text = data.x.toString()
-       y.text = data.y.toString()
+        x.text = "X: ${data.x}"
+        y.text = "Y: ${data.y}"
+        z.text = "Z: ${data.z}"
     }
 
     override fun setTemp(data: TempData) {
@@ -120,9 +121,19 @@ class LogFragment : Fragment(), LogView {
     }
 
     override fun setBrightImage(data: LdrData) {
-        when(data.on){
-            true -> brightness?.setImageDrawable(ContextCompat.getDrawable(context!!, R.drawable.not_bright))
-            false -> brightness?.setImageDrawable(ContextCompat.getDrawable(context!!, R.drawable.bright))
+        when (data.on) {
+            true -> brightness?.setImageDrawable(
+                ContextCompat.getDrawable(
+                    context!!,
+                    R.drawable.not_bright
+                )
+            )
+            false -> brightness?.setImageDrawable(
+                ContextCompat.getDrawable(
+                    context!!,
+                    R.drawable.bright
+                )
+            )
         }
     }
 

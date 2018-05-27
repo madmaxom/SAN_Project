@@ -9,7 +9,7 @@
 #include "AccelerometerDriver.h"
 #include <avr/wdt.h>
 
-// Driver
+#pragma region FIELDS
 TemperatureDriver temperature_driver;
 AccelerometerDriver accelerometer_driver;
 BluetoothDriver bluetooth_driver;
@@ -21,9 +21,12 @@ Thread tfront = Thread();
 Thread tback_m = Thread();
 Thread tback_l = Thread();
 Thread tback_r = Thread();
+Thread tPiezo = Thread();
+Thread tBacklight = Thread();
 
-// Fields
 double gdata[3];
+double recent_g = 0;
+
 int distance_front = 150;
 int distance_back_m = 150;
 int distance_back_l = 150;
@@ -31,7 +34,12 @@ int distance_back_r = 150;
 
 int sendCounter = 0;
 
-// PIN Defeinitions
+const int distance_3 = 30;
+const int distance_2 = 15;
+const int distance_1 = 5;
+#pragma endregion
+
+#pragma region PIN DEFINITIONS
 const int PIN_X = A4;
 const int PIN_Y = A3;
 const int PIN_Z = A2;
@@ -60,7 +68,10 @@ const int PIN_DISTANCE_BACK_L_ECHO = 7;
 const int PIN_DISTANCE_BACK_R_TRIG = 6;
 const int PIN_DISTANCE_BACK_R_ECHO = 5;
 
-// Method signatures
+const int PIN_PIEZO = 2;
+#pragma endregion
+
+#pragma region METHOD SIGNATURES
 unsigned long string_to_hex(const String& string);
 unsigned long hex_to_string(const String& string);
 
@@ -70,9 +81,12 @@ void turnLightsOn();
 void dimLights();
 void ldr();
 void ultrasonicFront();
-void ultrasonicBackM(); 
-void ultrasonicBackL(); 
-void ultrasonicBackR(); 
+void ultrasonicBackM();
+void ultrasonicBackL();
+void ultrasonicBackR();
+void checkPiezo();
+void turnBacklightOn(); 
+#pragma endregion
 
 void setup()
 {
@@ -109,14 +123,20 @@ void setup()
 	tback_m.onRun(ultrasonicBackM);
 	tback_m.setInterval(1);
 	tback_r.onRun(ultrasonicBackR);
-	tback_r.setInterval(1); 
+	tback_r.setInterval(1);
 	tback_l.onRun(ultrasonicBackL);
-	tback_l.setInterval(1); 
+	tback_l.setInterval(1);
+	tPiezo.onRun(checkPiezo);
+	tPiezo.setInterval(100);
+
+	tBacklight.onRun(turnBacklightOn);
+	tBacklight.setInterval(20); 
 
 	thread_controller.add(&tfront);
 	thread_controller.add(&tback_m);
 	thread_controller.add(&tback_l);
 	thread_controller.add(&tback_r);
+	thread_controller.add(&tPiezo);
 }
 
 void loop()
@@ -128,7 +148,7 @@ void loop()
 	else
 	{
 		wdt_enable(WDTO_4S); // Watchdog: Reset Arduino if no answere from smartphone
-		if(thread_controller.shouldRun())
+		if (thread_controller.shouldRun())
 		{
 			thread_controller.run();
 		}
@@ -143,22 +163,35 @@ void sendData()
 	char response[20];
 	// ACC ***************************************************
 	accelerometer_driver.GetGData(gdata);
-	message_builder.BuildResponse(String(*gdata, 2) + SEPERATOR + String(*(gdata + 1), 2), ACC_COMMAND, response);
+	message_builder.BuildResponse(
+		String(*gdata, 1) + SEPERATOR + String(*(gdata + 1), 1) + SEPERATOR + String(*(gdata + 2), 1), ACC_COMMAND, response);
 	Serial.println(response);
 	bluetooth_driver.Send(response);
 
+	Serial.println(recent_g); 
+	Serial.println(*(gdata + 1));
+	if (fabs(recent_g - *(gdata + 1)) > 0.5)
+	{
+		if(tBacklight.shouldRun())
+		{
+			tBacklight.run();
+		}
+	}
+	recent_g = *(gdata + 1);
+
 	// TEMP **************************************************
-	if (sendCounter > 5)
+	if (sendCounter > 15)
 	{
 		const auto temp = temperature_driver.GetTemperature();
 		message_builder.BuildResponse(String(temp, 2), TEMP_COMMAND, response);
 		Serial.println(response);
 		bluetooth_driver.Send(response);
+
+		// LDR ***************************************************
+		ldr();
+
 		sendCounter = 0;
 	}
-
-	// LDR ***************************************************
-	ldr();
 
 	// DISTANCE **********************************************
 	message_builder.BuildResponse(
@@ -168,6 +201,47 @@ void sendData()
 	bluetooth_driver.Send(response);
 
 	sendCounter++;
+}
+
+void turnBacklightOn()
+{
+	digitalWrite(PIN_BACKLIGHT_LEFT, HIGH);
+	digitalWrite(PIN_BACKLIGHT_RIGHT, HIGH);
+	delay(2000);
+	digitalWrite(PIN_BACKLIGHT_LEFT, LOW);
+	digitalWrite(PIN_BACKLIGHT_RIGHT, LOW);
+}
+
+void checkPiezo()
+{
+	Serial.println(distance_front);
+	if (distance_front < distance_3 && distance_front > distance_2
+		|| distance_back_l < distance_3 && distance_back_l > distance_2
+		|| distance_back_m < distance_3 && distance_back_m > distance_2
+		|| distance_back_r < distance_3 && distance_back_r > distance_2)
+	{
+		analogWrite(PIN_PIEZO, 50);
+		delay(150);
+		analogWrite(PIN_PIEZO, 0);
+		delay(150);
+	}
+	else if (distance_front < distance_2 && distance_front > distance_1
+		|| distance_back_l < distance_2 && distance_back_l > distance_1
+		|| distance_back_m < distance_2 && distance_back_m > distance_1
+		|| distance_back_r < distance_2 && distance_back_r > distance_1)
+	{
+		analogWrite(PIN_PIEZO, 50);
+		delay(100);
+		analogWrite(PIN_PIEZO, 0);
+		delay(100);
+	}
+	else if (distance_front < distance_1 && distance_front > 0
+		|| (distance_back_l < distance_1 && distance_back_l > 0)
+		|| (distance_back_m < distance_1 && distance_back_m > 0)
+		|| (distance_back_r < distance_1 && distance_back_r > 0))
+	{
+		analogWrite(PIN_PIEZO, 50);
+	}
 }
 
 void ldr()
@@ -202,9 +276,9 @@ void ultrasonicFront()
 	// Reads the echoPin, returns the sound wave travel time in microseconds
 	const int duration = pulseIn(PIN_DISTANCE_FRONT_ECHO, HIGH);
 	const int distance = duration / 2 / 29.1;
-	if(distance >= 0 && distance <= 150)
+	if (distance >= 0 && distance <= 150)
 	{
-		distance_front = distance; 
+		distance_front = distance;
 	}
 }
 

@@ -135,6 +135,12 @@ class ChartPresenter(private var context: Context) : BasePresenter<ChartView> {
             data?.addDataSet(set1)
         }
 
+        var set2 = data?.getDataSetByIndex(2)
+        if (set2 == null) {
+            set2 = createSet("Z", R.color.chartColor3)
+            data?.addDataSet(set2)
+        }
+
         if (data != null) {
             list.add(
                 Entry(
@@ -146,6 +152,12 @@ class ChartPresenter(private var context: Context) : BasePresenter<ChartView> {
                 Entry(
                     data.getDataSetByIndex(1).entryCount.toFloat(),
                     streamData.y.toFloat()
+                )
+            )
+            list.add(
+                Entry(
+                    data.getDataSetByIndex(2).entryCount.toFloat(),
+                    streamData.z.toFloat()
                 )
             )
         }

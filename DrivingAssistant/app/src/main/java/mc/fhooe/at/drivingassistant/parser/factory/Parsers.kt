@@ -10,7 +10,8 @@ class Parsers {
             val substring = message.split(BluetoothConstants.SEPERATOR)
             return AccData(
                 substring[0].toDouble(),
-                substring[1].toDouble()
+                substring[1].toDouble(),
+                substring[2].toDouble()
             )
         }
     }
