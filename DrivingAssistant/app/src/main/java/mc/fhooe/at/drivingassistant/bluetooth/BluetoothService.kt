@@ -108,24 +108,20 @@ class BluetoothService : Service() {
                 try {
                     bytes = inStream?.read(buffer)
                     if (bytes != null) {
-                        synchronized(message) {
-                            message.append(String(buffer, 0, bytes))
-                            if (message.contains(START_COMMUNICATION)) {
-                                broadcastUpdate(App.ACTION_COMMUNICATION_STARTED)
-                                message.delete(0, message.length - 1)
-                                Logging.everything(javaClass.simpleName, message.toString())
-                            } else {
-                                if(message.contains("$") && message.contains("*")){
-                                    var messages = message.split("$")
-                                    messages.forEach {
-                                        Logging.everything(javaClass.simpleName, "$$it")
-                                        val data = messageHandler?.handle("$$it")
-                                        data?.let { broadcastUpdate(App.ACTION_RECEIVE_DATA, it) }
-                                    }
-                                    message.delete(0, message.length)
-                                    write(ACK)
-                                }
+                        message.append(String(buffer, 0, bytes))
+                        if (message.contains(START_COMMUNICATION)) {
+                            broadcastUpdate(App.ACTION_COMMUNICATION_STARTED)
+                            message.delete(0, message.length - 1)
+                            Logging.everything(javaClass.simpleName, message.toString())
+                        } else {
+                            val messages = message.split("$")
+                            messages.forEach {
+                                Logging.everything(javaClass.simpleName, "$$it")
+                                val data = messageHandler?.handle("$$it")
+                                data?.let { broadcastUpdate(App.ACTION_RECEIVE_DATA, it) }
                             }
+                            message.delete(0, message.length)
+                            write(ACK)
                         }
                     }
                 } catch (e: IOException) {

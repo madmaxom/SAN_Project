@@ -85,7 +85,6 @@
     <ClInclude Include="DisplayDriver.h" />
     <ClInclude Include="LdrDriver.h" />
     <ClInclude Include="MessageBuilder.h" />
-    <ClInclude Include="ObstacleDetection.h" />
     <ClInclude Include="SpeedDriver.h" />
     <ClInclude Include="TemperatureDriver.h" />
     <ClInclude Include="__vm\.SAN_Project.vsarduino.h" />
@@ -97,7 +96,6 @@
     <ClCompile Include="DisplayDriver.cpp" />
     <ClCompile Include="LdrDriver.cpp" />
     <ClCompile Include="MessageBuilder.cpp" />
-    <ClCompile Include="ObstacleDetection.cpp" />
     <ClCompile Include="SpeedDriver.cpp" />
     <ClCompile Include="TemperatureDriver.cpp" />
   </ItemGroup>

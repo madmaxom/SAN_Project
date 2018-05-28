@@ -23,6 +23,7 @@ Thread tback_l = Thread();
 Thread tback_r = Thread();
 Thread tPiezo = Thread();
 Thread tBacklight = Thread();
+Thread tTimeOut = Thread();
 
 double gdata[3];
 double recent_g = 0;
@@ -85,7 +86,8 @@ void ultrasonicBackM();
 void ultrasonicBackL();
 void ultrasonicBackR();
 void checkPiezo();
-void turnBacklightOn(); 
+void turnBacklightOn();
+void checkTimeOut();
 #pragma endregion
 
 void setup()
@@ -129,14 +131,18 @@ void setup()
 	tPiezo.onRun(checkPiezo);
 	tPiezo.setInterval(1);
 
+	tTimeOut.onRun(checkTimeOut);
+	tTimeOut.setInterval(250);
+
 	tBacklight.onRun(turnBacklightOn);
-	tBacklight.setInterval(20); 
+	tBacklight.setInterval(20);
 
 	thread_controller.add(&tfront);
 	thread_controller.add(&tback_m);
 	thread_controller.add(&tback_l);
 	thread_controller.add(&tback_r);
 	thread_controller.add(&tPiezo);
+	thread_controller.add(&tTimeOut);
 }
 
 void loop()
@@ -147,13 +153,11 @@ void loop()
 	}
 	else
 	{
-		wdt_enable(WDTO_4S); // Watchdog: Reset Arduino if no answere from smartphone
 		if (thread_controller.shouldRun())
 		{
 			thread_controller.run();
 		}
 		sendData();
-		wdt_reset();
 	}
 }
 
@@ -168,11 +172,11 @@ void sendData()
 	Serial.println(response);
 	bluetooth_driver.Send(response);
 
-	Serial.println(recent_g); 
+	Serial.println(recent_g);
 	Serial.println(*(gdata + 1));
 	if (fabs(recent_g - *(gdata + 1)) > 0.5)
 	{
-		if(tBacklight.shouldRun())
+		if (tBacklight.shouldRun())
 		{
 			tBacklight.run();
 		}
@@ -241,6 +245,15 @@ void checkPiezo()
 		|| (distance_back_r < distance_1 && distance_back_r > 0))
 	{
 		analogWrite(PIN_PIEZO, 50);
+	}
+}
+
+void checkTimeOut()
+{
+	wdt_enable(WDTO_2S);
+	if (bluetooth_driver.Receive())
+	{
+		wdt_reset();
 	}
 }
 

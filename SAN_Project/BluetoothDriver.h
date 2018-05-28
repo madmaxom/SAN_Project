@@ -33,7 +33,8 @@ public:
 	bool IsConnected();
 	void Disconnect();
 	void Connect();
-	void Send(const String& msg); 
+	void Send(const String& msg);
+	bool Receive();
 	SoftwareSerial serial;
 private:
 	bool connected = false;
