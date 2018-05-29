@@ -114,13 +114,15 @@ class BluetoothService : Service() {
                             message.delete(0, message.length - 1)
                             Logging.everything(javaClass.simpleName, message.toString())
                         } else {
-                            val messages = message.split("$")
-                            messages.forEach {
-                                Logging.everything(javaClass.simpleName, "$$it")
-                                val data = messageHandler?.handle("$$it")
-                                data?.let { broadcastUpdate(App.ACTION_RECEIVE_DATA, it) }
+                            if(message.contains("$") && message.contains("*")){
+                                val messages = message.split("$")
+                                messages.forEach {
+                                    Logging.everything(javaClass.simpleName, "$$it")
+                                    val data = messageHandler?.handle("$$it")
+                                    data?.let { broadcastUpdate(App.ACTION_RECEIVE_DATA, it) }
+                                }
+                                message.delete(0, message.length)
                             }
-                            message.delete(0, message.length)
                             write(ACK)
                         }
                     }
