@@ -129,10 +129,10 @@ void setup()
 	tback_l.onRun(ultrasonicBackL);
 	tback_l.setInterval(1);
 	tPiezo.onRun(checkPiezo);
-	tPiezo.setInterval(400);
+	tPiezo.setInterval(40);
 
 	tTimeOut.onRun(checkTimeOut);
-	tTimeOut.setInterval(250);
+	tTimeOut.setInterval(400);
 
 	tBacklight.onRun(turnBacklightOn);
 	tBacklight.setInterval(20);
@@ -158,7 +158,6 @@ void loop()
 			thread_controller.run();
 		}
 		sendData();
-		delay(10); 
 	}
 }
 
@@ -173,8 +172,6 @@ void sendData()
 	Serial.println(response);
 	bluetooth_driver.Send(response);
 
-	Serial.println(recent_g);
-	Serial.println(*(gdata + 1));
 	if (fabs(recent_g - *(gdata + 1)) > 0.5)
 	{
 		if (tBacklight.shouldRun())
@@ -219,7 +216,6 @@ void turnBacklightOn()
 
 void checkPiezo()
 {
-	Serial.println(distance_front);
 	if (distance_front < distance_3 && distance_front > distance_2
 		|| distance_back_l < distance_3 && distance_back_l > distance_2
 		|| distance_back_m < distance_3 && distance_back_m > distance_2
@@ -246,6 +242,10 @@ void checkPiezo()
 		|| (distance_back_r < distance_1 && distance_back_r > 0))
 	{
 		analogWrite(PIN_PIEZO, 50);
+	}
+	else
+	{
+		analogWrite(PIN_PIEZO, 0);
 	}
 }
 

@@ -100,10 +100,10 @@ class BluetoothService : Service() {
         }
 
         override fun run() {
-            val buffer = ByteArray(256)
+            val buffer = ByteArray(1024)
             var bytes: Int?
             val message = StringBuilder()
-
+            var i = 0
             while (true) {
                 try {
                     bytes = inStream?.read(buffer)
@@ -114,16 +114,18 @@ class BluetoothService : Service() {
                             message.delete(0, message.length - 1)
                             Logging.everything(javaClass.simpleName, message.toString())
                         } else {
-                            if(message.contains("$") && message.contains("*")){
+                            if (i == 7) {
+                                Logging.everything(javaClass.simpleName, message.toString())
                                 val messages = message.split("$")
                                 messages.forEach {
-                                    Logging.everything(javaClass.simpleName, "$$it")
+                                    Logging.everything(javaClass.simpleName, it)
                                     val data = messageHandler?.handle("$$it")
                                     data?.let { broadcastUpdate(App.ACTION_RECEIVE_DATA, it) }
+                                    write(ACK)
                                 }
+                                i = 0
                                 message.delete(0, message.length)
                             }
-                            write(ACK)
                         }
                     }
                 } catch (e: IOException) {
@@ -132,6 +134,7 @@ class BluetoothService : Service() {
                     Logging.error(javaClass.simpleName, e.message.toString())
                     break
                 }
+                i = i.inc()
             }
         }
 
