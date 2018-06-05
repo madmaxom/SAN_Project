@@ -8,7 +8,6 @@
 #else
 	#include "WProgram.h"
 #endif
-#include <SoftwareSerial.h>
 
 class SpeedDriver
 {
@@ -25,6 +24,7 @@ public:
 	int pinX;
 	int pinY;
 	int pinZ;
+
 private:
 	bool connected = false;
 	String inputString;

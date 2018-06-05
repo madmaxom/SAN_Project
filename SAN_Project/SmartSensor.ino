@@ -1,56 +1,148 @@
-#include "SpeedDriver.h"
+#include <SoftwareSerial.h>
+#include "LdrDriver.h"
 #include "MessageBuilder.h"
 #include "BluetoothDriver.h"
-//#include <ThreadController.h>
-//#include <Thread.h>
-//#include <StaticThreadController.h>
-#include "ObstacleDetection.h"
+#include <ThreadController.h>
+#include <Thread.h>
+#include <StaticThreadController.h>
 #include "TemperatureDriver.h"
 #include "AccelerometerDriver.h"
-#include "DisplayDriver.h"
-#include "string.h"
 #include <avr/wdt.h>
 
-// Driver
+#pragma region FIELDS
 TemperatureDriver temperature_driver;
 AccelerometerDriver accelerometer_driver;
 BluetoothDriver bluetooth_driver;
 MessageBuilder message_builder;
+LdrDriver ldr_driver;
 
-// Fields
+ThreadController thread_controller = ThreadController();
+Thread tfront = Thread();
+Thread tback_m = Thread();
+Thread tback_l = Thread();
+Thread tback_r = Thread();
+Thread tPiezo = Thread();
+Thread tBacklight = Thread();
+Thread tTimeOut = Thread();
+
 double gdata[3];
-String inputString = "";
-double temp;
-int delayCount = 300;
+double recent_g = 0;
 
-int PIN_NOT_AVAILABLE = A7;
-int LDR_Pin = A2; 
-int frontLightPin1 = 7;
-int frontLightPin2 = 8;
-int backLightPin1 = 10;
-int backLightPin2 = 11;
-int ON = 1;
-int OFF = 0;
+int distance_front = 150;
+int distance_back_m = 150;
+int distance_back_l = 150;
+int distance_back_r = 150;
 
-// Method signatures
+int sendCounter = 0;
+
+const int distance_3 = 30;
+const int distance_2 = 15;
+const int distance_1 = 5;
+#pragma endregion
+
+#pragma region PIN DEFINITIONS
+const int PIN_X = A4;
+const int PIN_Y = A3;
+const int PIN_Z = A2;
+
+const int PIN_LDR = A0;
+const int PIN_TEMP = A1;
+
+const int PIN_FRONTLIGHT_LEFT = 50;
+const int PIN_FRONTLIGHT_RIGHT = 51;
+
+const int PIN_BACKLIGHT_LEFT = 48;
+const int PIN_BACKLIGHT_RIGHT = 49;
+
+const int PIN_BT_RX = 52;
+const int PIN_BT_TX = 53;
+
+const int PIN_DISTANCE_FRONT_TRIG = 12;
+const int PIN_DISTANCE_FRONT_ECHO = 11;
+
+const int PIN_DISTANCE_BACK_M_TRIG = 10;
+const int PIN_DISTANCE_BACK_M_ECHO = 9;
+
+const int PIN_DISTANCE_BACK_L_TRIG = 8;
+const int PIN_DISTANCE_BACK_L_ECHO = 7;
+
+const int PIN_DISTANCE_BACK_R_TRIG = 6;
+const int PIN_DISTANCE_BACK_R_ECHO = 5;
+
+const int PIN_PIEZO = 2;
+#pragma endregion
+
+#pragma region METHOD SIGNATURES
 unsigned long string_to_hex(const String& string);
 unsigned long hex_to_string(const String& string);
 
 void handleMessage();
 void sendData();
 void turnLightsOn();
-void dimLights(); 
+void dimLights();
+void ldr();
+void ultrasonicFront();
+void ultrasonicBackM();
+void ultrasonicBackL();
+void ultrasonicBackR();
+void checkPiezo();
+void turnBacklightOn();
+void checkTimeOut();
+#pragma endregion
 
 void setup()
 {
 	Serial.begin(9600);
 
-	temperature_driver = TemperatureDriver(6);
-	accelerometer_driver = AccelerometerDriver(0, 1, PIN_NOT_AVAILABLE, 1);
-	bluetooth_driver = BluetoothDriver(12, 13);
+	temperature_driver = TemperatureDriver(PIN_TEMP);
+	accelerometer_driver = AccelerometerDriver(PIN_X, PIN_Y, PIN_Z, 1);
+	bluetooth_driver = BluetoothDriver(PIN_BT_RX, PIN_BT_TX);
+	ldr_driver = LdrDriver(PIN_LDR);
 	message_builder = MessageBuilder();
-	pinMode(frontLightPin1, OUTPUT); 
-	pinMode(frontLightPin2, OUTPUT); 
+
+	// Pin Modes Leds
+	pinMode(PIN_FRONTLIGHT_LEFT, OUTPUT);
+	pinMode(PIN_FRONTLIGHT_RIGHT, OUTPUT);
+	pinMode(PIN_BACKLIGHT_LEFT, OUTPUT);
+	pinMode(PIN_BACKLIGHT_RIGHT, OUTPUT);
+
+	// Pin Modes Ultrasonic
+	pinMode(PIN_DISTANCE_FRONT_TRIG, OUTPUT);
+	pinMode(PIN_DISTANCE_FRONT_ECHO, INPUT);
+
+	pinMode(PIN_DISTANCE_BACK_M_TRIG, OUTPUT);
+	pinMode(PIN_DISTANCE_BACK_M_ECHO, INPUT);
+
+	pinMode(PIN_DISTANCE_BACK_L_TRIG, OUTPUT);
+	pinMode(PIN_DISTANCE_BACK_L_ECHO, INPUT);
+
+	pinMode(PIN_DISTANCE_BACK_R_TRIG, OUTPUT);
+	pinMode(PIN_DISTANCE_BACK_R_ECHO, INPUT);
+
+	// Threads
+	tfront.onRun(ultrasonicFront);
+	tfront.setInterval(1);
+	tback_m.onRun(ultrasonicBackM);
+	tback_m.setInterval(1);
+	tback_r.onRun(ultrasonicBackR);
+	tback_r.setInterval(1);
+	tback_l.onRun(ultrasonicBackL);
+	tback_l.setInterval(1);
+	tPiezo.onRun(checkPiezo);
+	tPiezo.setInterval(40);
+
+	tTimeOut.onRun(checkTimeOut);
+	tTimeOut.setInterval(400);
+
+	tBacklight.onRun(turnBacklightOn);
+	tBacklight.setInterval(20);
+
+	thread_controller.add(&tfront);
+	thread_controller.add(&tback_m);
+	thread_controller.add(&tback_l);
+	thread_controller.add(&tback_r);
+	thread_controller.add(&tPiezo);
+	thread_controller.add(&tTimeOut);
 }
 
 void loop()
@@ -61,71 +153,210 @@ void loop()
 	}
 	else
 	{
-		// Watchdog 
-		// If after 4 seconds no response from smartphone --> reset arduino
-		wdt_enable(WDTO_4S);
+		if (thread_controller.shouldRun())
+		{
+			thread_controller.run();
+		}
 		sendData();
-
-		// Reset watchdog so it does not reset arduino
-		wdt_reset();
-		delay(10);
 	}
 }
 
+
 void sendData()
 {
-	delayCount++;
 	char response[20];
 	// ACC ***************************************************
 	accelerometer_driver.GetGData(gdata);
-	message_builder.BuildResponse(String(*gdata, 2) + ";" + String(*(gdata + 1), 2), ACC_COMMAND, response);
+	message_builder.BuildResponse(
+		String(*gdata, 1) + SEPERATOR + String(*(gdata + 1), 1) + SEPERATOR + String(*(gdata + 2), 1), ACC_COMMAND, response);
 	Serial.println(response);
 	bluetooth_driver.Send(response);
 
-	// TEMP **************************************************
-	if (delayCount > 20)
+	if (fabs(recent_g - *(gdata + 1)) > 0.5)
 	{
-		temp = temperature_driver.GetTemperature();
+		if (tBacklight.shouldRun())
+		{
+			tBacklight.run();
+		}
+	}
+	recent_g = *(gdata + 1);
+
+	// TEMP **************************************************
+	if (sendCounter > 15)
+	{
+		const auto temp = temperature_driver.GetTemperature();
 		message_builder.BuildResponse(String(temp, 2), TEMP_COMMAND, response);
 		Serial.println(response);
 		bluetooth_driver.Send(response);
 
-	// LDR ***************************************************
+		// LDR ***************************************************
+		ldr();
 
-		const int ldr_reading = analogRead(LDR_Pin);
-		Serial.println(ldr_reading); 
-		if (ldr_reading < 600) {
-			dimLights();
-			message_builder.BuildResponse(String(1), LDR_COMMAND, response);
-			Serial.println(response);
-			bluetooth_driver.Send(response);
-		}
-		else
-		{
-			turnLightsOn();
-			message_builder.BuildResponse(String(0), LDR_COMMAND, response);
-			Serial.println(response);
-			bluetooth_driver.Send(response);
-		}
+		sendCounter = 0;
+	}
 
-		delayCount = 0;
+	// DISTANCE **********************************************
+	message_builder.BuildResponse(
+		String(distance_front) + SEPERATOR + String(distance_back_m) + SEPERATOR + String(distance_back_l) +
+		SEPERATOR + String(distance_back_r), DIST_COMMAND, response);
+	Serial.println(response);
+	bluetooth_driver.Send(response);
+
+	sendCounter++;
+}
+
+void turnBacklightOn()
+{
+	digitalWrite(PIN_BACKLIGHT_LEFT, HIGH);
+	digitalWrite(PIN_BACKLIGHT_RIGHT, HIGH);
+	delay(2000);
+	digitalWrite(PIN_BACKLIGHT_LEFT, LOW);
+	digitalWrite(PIN_BACKLIGHT_RIGHT, LOW);
+}
+
+void checkPiezo()
+{
+	if (distance_front < distance_3 && distance_front > distance_2
+		|| distance_back_l < distance_3 && distance_back_l > distance_2
+		|| distance_back_m < distance_3 && distance_back_m > distance_2
+		|| distance_back_r < distance_3 && distance_back_r > distance_2)
+	{
+		analogWrite(PIN_PIEZO, 50);
+		delay(200);
+		analogWrite(PIN_PIEZO, 0);
+		delay(200);
+	}
+	else if (distance_front < distance_2 && distance_front > distance_1
+		|| distance_back_l < distance_2 && distance_back_l > distance_1
+		|| distance_back_m < distance_2 && distance_back_m > distance_1
+		|| distance_back_r < distance_2 && distance_back_r > distance_1)
+	{
+		analogWrite(PIN_PIEZO, 50);
+		delay(100);
+		analogWrite(PIN_PIEZO, 0);
+		delay(100);
+	}
+	else if (distance_front < distance_1 && distance_front > 0
+		|| (distance_back_l < distance_1 && distance_back_l > 0)
+		|| (distance_back_m < distance_1 && distance_back_m > 0)
+		|| (distance_back_r < distance_1 && distance_back_r > 0))
+	{
+		analogWrite(PIN_PIEZO, 50);
+	}
+	else
+	{
+		analogWrite(PIN_PIEZO, 0);
+	}
+}
+
+void checkTimeOut()
+{
+	wdt_enable(WDTO_2S);
+	if (bluetooth_driver.Receive())
+	{
+		wdt_reset();
+	}
+}
+
+void ldr()
+{
+	char response[20];
+	const auto ldr_reading = ldr_driver.GetValue();
+	if (ldr_reading < 600)
+	{
+		dimLights();
+		message_builder.BuildResponse(String(1), LDR_COMMAND, response);
+		Serial.println(response);
+		bluetooth_driver.Send(response);
+	}
+	else
+	{
+		turnLightsOn();
+		message_builder.BuildResponse(String(0), LDR_COMMAND, response);
+		Serial.println(response);
+		bluetooth_driver.Send(response);
+	}
+}
+
+
+void ultrasonicFront()
+{
+	digitalWrite(PIN_DISTANCE_FRONT_TRIG, LOW);
+	delayMicroseconds(5);
+	// Sets the trigPin on HIGH state for 10 micro seconds
+	digitalWrite(PIN_DISTANCE_FRONT_TRIG, HIGH);
+	delayMicroseconds(10);
+	digitalWrite(PIN_DISTANCE_FRONT_TRIG, LOW);
+	// Reads the echoPin, returns the sound wave travel time in microseconds
+	const int duration = pulseIn(PIN_DISTANCE_FRONT_ECHO, HIGH);
+	const int distance = duration / 2 / 29.1;
+	if (distance >= 0 && distance <= 150)
+	{
+		distance_front = distance;
+	}
+}
+
+void ultrasonicBackM()
+{
+	digitalWrite(PIN_DISTANCE_BACK_M_TRIG, LOW);
+	delayMicroseconds(5);
+	// Sets the trigPin on HIGH state for 10 micro seconds
+	digitalWrite(PIN_DISTANCE_BACK_M_TRIG, HIGH);
+	delayMicroseconds(10);
+	digitalWrite(PIN_DISTANCE_BACK_M_TRIG, LOW);
+	// Reads the echoPin, returns the sound wave travel time in microseconds
+	const int duration = pulseIn(PIN_DISTANCE_BACK_M_ECHO, HIGH);
+	const int distance = duration / 2 / 29.1;
+	if (distance >= 0 && distance <= 150)
+	{
+		distance_back_m = distance;
+	}
+}
+
+void ultrasonicBackL()
+{
+	digitalWrite(PIN_DISTANCE_BACK_L_TRIG, LOW);
+	delayMicroseconds(5);
+	// Sets the trigPin on HIGH state for 10 micro seconds
+	digitalWrite(PIN_DISTANCE_BACK_L_TRIG, HIGH);
+	delayMicroseconds(10);
+	digitalWrite(PIN_DISTANCE_BACK_L_TRIG, LOW);
+	// Reads the echoPin, returns the sound wave travel time in microseconds
+	const int duration = pulseIn(PIN_DISTANCE_BACK_L_ECHO, HIGH);
+	const int distance = duration / 2 / 29.1;
+	if (distance >= 0 && distance <= 150)
+	{
+		distance_back_l = distance;
+	}
+}
+
+void ultrasonicBackR()
+{
+	digitalWrite(PIN_DISTANCE_BACK_R_TRIG, LOW);
+	delayMicroseconds(5);
+	// Sets the trigPin on HIGH state for 10 micro seconds
+	digitalWrite(PIN_DISTANCE_BACK_R_TRIG, HIGH);
+	delayMicroseconds(10);
+	digitalWrite(PIN_DISTANCE_BACK_R_TRIG, LOW);
+	// Reads the echoPin, returns the sound wave travel time in microseconds
+	const int duration = pulseIn(PIN_DISTANCE_BACK_R_ECHO, HIGH);
+	const int distance = duration / 2 / 29.1;
+	if (distance >= 0 && distance <= 150)
+	{
+		distance_back_r = distance;
 	}
 }
 
 void turnLightsOn()
 {
-	digitalWrite(frontLightPin1, ON);
-	digitalWrite(frontLightPin2, ON);
-	digitalWrite(backLightPin1, ON);
-	digitalWrite(backLightPin2, ON);
+	digitalWrite(PIN_FRONTLIGHT_LEFT, HIGH);
+	digitalWrite(PIN_FRONTLIGHT_RIGHT, HIGH);
 }
 
 void dimLights()
 {
-	digitalWrite(frontLightPin1, OFF);
-	digitalWrite(frontLightPin2, OFF);
-	digitalWrite(backLightPin1, OFF);
-	digitalWrite(backLightPin2, OFF);
+	digitalWrite(PIN_FRONTLIGHT_LEFT, LOW);
+	digitalWrite(PIN_FRONTLIGHT_RIGHT, LOW);
 }
 
 

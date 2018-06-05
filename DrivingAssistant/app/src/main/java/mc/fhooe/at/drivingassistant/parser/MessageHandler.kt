@@ -8,16 +8,16 @@ class MessageHandler : IMessageHandler() {
     private var factory: ParserFactory = ParserFactory()
 
     override fun handle(message: String): IData {
-        if (valid(message)) {
-            val parser = factory.create(extractCommand(message))
-            val parsed : IData
-            try {
-               parsed = parser.parse(extractData(message))
-            }catch (_ : Exception){
-                return IData()
+            if (valid(message)) {
+                val parser = factory.create(extractCommand(message))
+                val parsed : IData
+                try {
+                    parsed = parser.parse(extractData(message))
+                }catch (_ : Exception){
+                    return IData()
+                }
+                return parsed
             }
-            return parsed
-        }
         return IData()
     }
 }

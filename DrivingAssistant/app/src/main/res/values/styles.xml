@@ -13,4 +13,26 @@
         <item name="colorAccent">@color/colorPrimary</item>
     </style>
 
+    <style name="Distance_Far" parent="Default">
+        <item name="third">#00FF00</item>
+    </style>
+
+    <style name="Distance_Medium" parent="Default">
+        <item name="second">#FFFF00</item>
+    </style>
+
+    <style name="Distance_Close" parent="Default">
+        <item name="first">#FF0000</item>
+    </style>
+
+    <style name="Default">
+        <item name="first">#000000</item>
+        <item name="second">#000000</item>
+        <item name="third">#000000</item>
+    </style>
+
+    <style name="Up_Distance_Far" parent="Default">
+        <item name="third">#00FF00</item>
+    </style>
+
 </resources>

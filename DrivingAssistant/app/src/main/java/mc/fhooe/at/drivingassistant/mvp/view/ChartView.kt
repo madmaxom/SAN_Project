@@ -6,4 +6,5 @@ import mc.fhooe.at.drivingassistant.mvp.base.BaseView
 interface ChartView : BaseView {
 
     fun updateAccelerationEntries(list: ArrayList<Entry>)
+    fun updateDistanceEntry(list: ArrayList<Entry>)
 }

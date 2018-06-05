@@ -1,8 +1,8 @@
 #include "TemperatureDriver.h"
 
 #define NUMSAMPLES 5
-#define SERIESRESISTOR 20000
-#define THERMISTORNOMINAL 10000
+#define SERIESRESISTOR 22000
+#define THERMISTORNOMINAL 20000
 #define TEMPERATURENOMINAL 25
 #define BCOEFFICIENT 3900
 
@@ -16,9 +16,9 @@ TemperatureDriver::TemperatureDriver()
 TemperatureDriver::~TemperatureDriver()
 = default;
 
-TemperatureDriver::TemperatureDriver(int pin)
+TemperatureDriver::TemperatureDriver(int input)
 {
-	this->pin = pin;
+	pin= input;
 }
 
 double TemperatureDriver::GetTemperature() const
