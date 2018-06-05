@@ -49,6 +49,8 @@ void setup()
 	accelerometer_driver = AccelerometerDriver(0, 1, PIN_NOT_AVAILABLE, 1);
 	bluetooth_driver = BluetoothDriver(12, 13);
 	message_builder = MessageBuilder();
+	pinMode(frontLightPin1, OUTPUT); 
+	pinMode(frontLightPin2, OUTPUT); 
 }
 
 void loop()
@@ -93,14 +95,14 @@ void sendData()
 		const int ldr_reading = analogRead(LDR_Pin);
 		Serial.println(ldr_reading); 
 		if (ldr_reading < 600) {
-			turnLightsOn(); 
+			dimLights();
 			message_builder.BuildResponse(String(1), LDR_COMMAND, response);
 			Serial.println(response);
 			bluetooth_driver.Send(response);
 		}
 		else
 		{
-			dimLights();
+			turnLightsOn();
 			message_builder.BuildResponse(String(0), LDR_COMMAND, response);
 			Serial.println(response);
 			bluetooth_driver.Send(response);
